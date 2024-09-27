@@ -1,7 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import './api.dart';
+
+class MyState extends ChangeNotifier {
+  List<Item> _items = [];
+
+  List<Item> get items => _items;
+
+  void setItems(List<Item> items) {
+    _items = items;
+    notifyListeners();
+  }
+
+  Future<void> fetchItems() async {
+    ItemFetcher fetcher = ItemFetcher();
+    List<Item> fetchedItems = await fetcher.fetchItems();
+    setItems(fetchedItems);
+  }
+
+  Future<void> createItem(String title)  async {
+    ItemCreator creator = ItemCreator();
+    Item newItem = Item(title, false);
+    await creator.createItem(newItem);
+    await fetchItems();
+  }
+
+  Future<void> updateItem(Item item) async {
+    ItemUpdater updater = ItemUpdater();
+    await updater.updateItem(item);
+    await fetchItems();
+  }
+
+  Future<void> deleteItem(String id) async {
+    ItemDeleter deleter = ItemDeleter();
+    await deleter.deleteItem(id);
+    await fetchItems();
+  }
+}
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => MyState(),
+      child: const MyApp(),
+    )
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -15,13 +58,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class Items {
-  final String titel;
-  bool done; 
-
-  Items(this.titel, this.done);
-}
-
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
 
@@ -30,21 +66,31 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<Items> aktiviteter = [
-    Items('Diska', false), 
-    Items('Laga mat', false), 
-    Items('Städa', false), 
-  ];
+  String filter = 'Alla';
 
-String filter = 'Alla';
-
-List<Items> get filteredItems {
-  if (filter == 'Färdig') {
-    return aktiviteter.where((item) => item.done).toList();
-  } else if (filter == 'Ej färdig') {
-    return aktiviteter.where((item) => !item.done).toList();
+  @override
+  void initState() {
+    super.initState();
+    _fetchItems;
   }
-  return aktiviteter;
+
+  Future<void> _fetchItems() async {
+    await Provider.of<MyState>(context, listen: false).fetchItems();
+  }
+
+List<Item> get filteredItems {
+  final items = Provider.of<MyState>(context).items;
+  if (filter == 'Färdig') {
+    return items.where((item) => item.done).toList();
+  } else if (filter == 'Ej färdig') {
+    return items.where((item) => !item.done).toList();
+  }
+  return items;
+}
+
+
+void _removeTask(String id) {
+    Provider.of<MyState>(context, listen: false).deleteItem(id);
 }
 
   @override
@@ -52,7 +98,7 @@ List<Items> get filteredItems {
     return Scaffold(
       appBar: AppBar( 
         title: const Text(
-          'Påminnelser',
+          'TIG333 TODO',
           style: TextStyle(fontSize: 32), 
         ),
       actions: [
@@ -79,10 +125,16 @@ List<Items> get filteredItems {
           ),
         ],
       ),
-      body: ListView(
-        children: [         
-           for (var aktiviteter in filteredItems) _item(aktiviteter),
-        ], 
+      body: FutureBuilder(
+        future: _fetchItems(),
+        builder: (context, snapshot) {
+          return ListView.builder(
+            itemCount: filteredItems.length,
+            itemBuilder: (context, index) {
+              return _item(filteredItems[index]);
+            },
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(),
@@ -92,26 +144,22 @@ List<Items> get filteredItems {
             MaterialPageRoute(builder: (context) => AddTask()),
           );
           if (result != null && result is String) {
-            setState(() {
-              aktiviteter.add(Items(result, false));
-            }
-          );
-        }
-      },
-      backgroundColor: Colors.white,
-        child: const Icon(Icons.add, 
-          size: 40, 
-          color: Colors.grey),
+            await Provider.of<MyState>(context, listen: false).createItem(result);
+          }
+        },
+        backgroundColor: Colors.white,
+        child: const Icon(Icons.add, size: 40, color: Colors.grey),
       ),
     );
   }
 
-  Widget _item(Items aktivitet) {
+  Widget _item(Item item) {
     return GestureDetector(
       onTap: () {
         setState(() {
-          aktivitet.done = !aktivitet.done;
+          item.done = !item.done;
         });
+        Provider.of<MyState>(context, listen: false).updateItem(item);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -131,21 +179,26 @@ List<Items> get filteredItems {
                   borderRadius: BorderRadius.circular(15),
                   border: Border.all(),
                 ),
-                child: aktivitet.done
+                child: item.done
                 ? const Icon(Icons.done)
                 : null,
               ),
             ),
             Expanded(
               child: Text(
-                aktivitet.titel,
+                item.title,
                 style: const TextStyle(fontSize: 20),
               ),
             ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(right: 10),
-              child: Icon(Icons.close, size: 30),
-            ),
+              child: GestureDetector(
+                onTap: () {
+                  _removeTask(item.id!);
+                },
+                child: Icon(Icons.close, size: 30),
+              ),
+            )   
           ],
         ),
       )
