@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import './api.dart';
+import './add_task.dart';
 
 class MyState extends ChangeNotifier {
   List<Item> _items = [];
@@ -66,7 +67,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String filter = 'Alla';
+  String filter = 'All';
 
   @override
   void initState() {
@@ -80,9 +81,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
 List<Item> get filteredItems {
   final items = Provider.of<MyState>(context).items;
-  if (filter == 'Färdig') {
+  if (filter == 'Completed') {
     return items.where((item) => item.done).toList();
-  } else if (filter == 'Ej färdig') {
+  } else if (filter == 'Not Completed') {
     return items.where((item) => !item.done).toList();
   }
   return items;
@@ -110,16 +111,16 @@ void _removeTask(String id) {
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
               const PopupMenuItem<String>(
-                value: 'Alla',
-                child: Text('Alla'),
+                value: 'All',
+                child: Text('All'),
               ),
               const PopupMenuItem<String>(
-                value: 'Färdig',
-                child: Text('Färdig'),
+                value: 'Completed',
+                child: Text('Completed'),
               ),
               const PopupMenuItem<String>(
-                value: 'Ej färdig',
-                child: Text('Ej färdig'),
+                value: 'Not Completed',
+                child: Text('Not Completed'),
               ),
             ],
           ),
@@ -205,56 +206,3 @@ void _removeTask(String id) {
     );
   }
 }
-
-class AddTask extends StatefulWidget {
-  const AddTask({super.key});
-
-  @override
-  State<AddTask> createState() => _AddTaskState();
-}
-
-class _AddTaskState extends State<AddTask> {
-  String newTask = '';
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Lägg till',
-          style: TextStyle(fontSize: 32), 
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              onChanged: (text) {
-                setState(() {
-                  newTask = text;
-                });
-              },
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            FloatingActionButton(
-              onPressed: () {
-                if (newTask.isNotEmpty) {
-                  Navigator.pop(context, newTask);
-              }
-            }, 
-            backgroundColor: Colors.white,
-            child: const Icon(Icons.add, 
-              size: 40, 
-              color: Colors.grey),
-            ),
-          ],
-        ),
-      )
-    );
-  }
-}
-

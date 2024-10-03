@@ -44,7 +44,7 @@ class ItemFetcher {
 
 class ItemCreator {
   Future<void> createItem(Item newItem) async {
-    final response = await http.post(
+    await http.post(
       Uri.parse('$ENDPOINT/todos?key=$KEY'),
       headers: {
         'Content-Type': 'application/json',
@@ -56,7 +56,7 @@ class ItemCreator {
 
 class ItemUpdater {
   Future<void> updateItem(Item updatedItem) async {
-    final response = await http.put(
+    await http.put(
       Uri.parse('$ENDPOINT/todos/${updatedItem.id}?key=$KEY'),
       headers: {
         'Content-Type': 'application/json',
@@ -68,7 +68,7 @@ class ItemUpdater {
 
 class ItemDeleter {
   Future<void> deleteItem(String id) async {
-    final response = await http.delete(
+    http.delete(
       Uri.parse('$ENDPOINT/todos/$id?key=$KEY')
     );
   }
