@@ -3,7 +3,7 @@ import 'dart:convert';
 
 
 const String ENDPOINT = 'https://todoapp-api.apps.k8s.gu.se';
-const String KEY = 'f75a658b-5f5b-4b51-8bf9-1e786c766583';
+const String KEY = 'f88b85dd-b58e-403c-84e5-524a948a8c2e';
 
 
 

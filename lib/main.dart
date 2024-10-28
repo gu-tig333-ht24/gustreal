@@ -14,12 +14,13 @@ class MyState extends ChangeNotifier {
   }
 
   Future<void> fetchItems() async {
+    print("Hämtar data");
     ItemFetcher fetcher = ItemFetcher();
     List<Item> fetchedItems = await fetcher.fetchItems();
     setItems(fetchedItems);
   }
 
-  Future<void> createItem(String title)  async {
+  Future<void> createItem(String title) async {
     ItemCreator creator = ItemCreator();
     Item newItem = Item(title, false);
     await creator.createItem(newItem);
@@ -44,7 +45,7 @@ void main() {
     ChangeNotifierProvider(
       create: (context) => MyState(),
       child: const MyApp(),
-    )
+    ),
   );
 }
 
@@ -72,38 +73,37 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _fetchItems;
+    _fetchItems(); 
   }
 
   Future<void> _fetchItems() async {
     await Provider.of<MyState>(context, listen: false).fetchItems();
   }
 
-List<Item> get filteredItems {
-  final items = Provider.of<MyState>(context).items;
-  if (filter == 'Completed') {
-    return items.where((item) => item.done).toList();
-  } else if (filter == 'Not Completed') {
-    return items.where((item) => !item.done).toList();
+  List<Item> get filteredItems {
+    final items = Provider.of<MyState>(context).items;
+    if (filter == 'Completed') {
+      return items.where((item) => item.done).toList();
+    } else if (filter == 'Not Completed') {
+      return items.where((item) => !item.done).toList();
+    }
+    return items;
   }
-  return items;
-}
 
-
-void _removeTask(String id) {
+  void _removeTask(String id) {
     Provider.of<MyState>(context, listen: false).deleteItem(id);
-}
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar( 
+      appBar: AppBar(
         title: const Text(
           'TIG333 TODO',
-          style: TextStyle(fontSize: 32), 
+          style: TextStyle(fontSize: 32),
         ),
-      actions: [
-        PopupMenuButton<String>(
+        actions: [
+          PopupMenuButton<String>(
             onSelected: (String result) {
               setState(() {
                 filter = result;
@@ -126,13 +126,13 @@ void _removeTask(String id) {
           ),
         ],
       ),
-      body: FutureBuilder(
-        future: _fetchItems(),
-        builder: (context, snapshot) {
+      body: Consumer<MyState>(
+        builder: (context, state, child) {
+          final items = filteredItems;
           return ListView.builder(
-            itemCount: filteredItems.length,
+            itemCount: items.length,
             itemBuilder: (context, index) {
-              return _item(filteredItems[index]);
+              return _item(items[index]);
             },
           );
         },
@@ -180,9 +180,7 @@ void _removeTask(String id) {
                   borderRadius: BorderRadius.circular(15),
                   border: Border.all(),
                 ),
-                child: item.done
-                ? const Icon(Icons.done)
-                : null,
+                child: item.done ? const Icon(Icons.done) : null,
               ),
             ),
             Expanded(
@@ -192,17 +190,17 @@ void _removeTask(String id) {
               ),
             ),
             Padding(
-              padding: EdgeInsets.only(right: 10),
+              padding: const EdgeInsets.only(right: 10),
               child: GestureDetector(
                 onTap: () {
                   _removeTask(item.id!);
                 },
-                child: Icon(Icons.close, size: 30),
+                child: const Icon(Icons.close, size: 30),
               ),
-            )   
+            ),
           ],
         ),
-      )
+      ),
     );
   }
 }
