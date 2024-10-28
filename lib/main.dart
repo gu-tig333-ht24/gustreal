@@ -14,6 +14,7 @@ class MyState extends ChangeNotifier {
   }
 
   Future<void> fetchItems() async {
+    print('hämtar data');
     ItemFetcher fetcher = ItemFetcher();
     List<Item> fetchedItems = await fetcher.fetchItems();
     setItems(fetchedItems);
@@ -72,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _fetchItems;
+    _fetchItems();
   }
 
   Future<void> _fetchItems() async {
@@ -126,13 +127,13 @@ void _removeTask(String id) {
           ),
         ],
       ),
-      body: FutureBuilder(
-        future: _fetchItems(),
-        builder: (context, snapshot) {
+      body: Consumer<MyState>(
+        builder: (context, state, child) {
+          final items = filteredItems;
           return ListView.builder(
-            itemCount: filteredItems.length,
+            itemCount: items.length,
             itemBuilder: (context, index) {
-              return _item(filteredItems[index]);
+              return _item(items[index]);
             },
           );
         },
